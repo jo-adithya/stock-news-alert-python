@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+from newsapi import NewsApiClient
 import os
 import requests
 
@@ -18,13 +19,25 @@ parameters = {
 response = requests.get(url, params=parameters)
 response.raise_for_status()
 stock_prices = response.json()['Time Series (Daily)']
-print(stock_prices)
 prices = []
+dates = []
 
 for i, j in enumerate(stock_prices):
+    dates.append(j)
     prices.append(float(stock_prices[j]['4. close']))
     if i == 1:
         break
+
+if abs(prices[0] - prices[1]) / prices[1] > 0.05:
+    news_api = NewsApiClient(api_key=os.environ.get('NEWS_API_KEY'))
+
+    all_articles = news_api.get_everything(
+        q='Tesla',
+        from_param=dates[1],
+        to=dates[0],
+        language='en',
+        sort_by='relevancy',
+    )['articles'][:3]
 
 # STEP 2: Use https://newsapi.org
 # Instead of printing ("Get News"), actually get the first 3 news pieces for the COMPANY_NAME.
